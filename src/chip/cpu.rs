@@ -63,7 +63,7 @@ impl Cpu {
                 }
             }
             6 => self.v[op.x as usize] = op.nn,
-            7 => self.v[op.x as usize] += op.nn,
+            7 => self.v[op.x as usize] = self.v[op.x as usize].wrapping_add(op.nn),
             8 => match op.n {
                 0 => self.v[op.x as usize] = self.v[op.y as usize],
                 1 => self.v[op.x as usize] = (self.v[op.x as usize] | self.v[op.y as usize]),

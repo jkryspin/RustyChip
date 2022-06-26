@@ -4,7 +4,7 @@ mod cpu;
 
 #[derive(Clone)]
 pub struct Chip {
-    cpu: cpu::Cpu,
+    pub cpu: cpu::Cpu,
 }
 
 impl Chip {
@@ -14,7 +14,7 @@ impl Chip {
         }
     }
     pub fn load_rom(&mut self) {
-        let contents = fs::read("./src/roms/BC_test.ch8").expect("File");
+        let contents = fs::read("./src/roms/ibm_logo.ch8").expect("File");
         self.cpu.init_ram(contents);
     }
 
@@ -34,7 +34,7 @@ impl Chip {
     }
 }
 
-struct Op {
+pub struct Op {
     op: u8,
     x: u8,
     y: u8,
