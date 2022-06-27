@@ -1,4 +1,6 @@
 use crate::chip::Op;
+use rand::prelude::*;
+
 
 #[derive(Clone)]
 pub struct Cpu {
@@ -8,6 +10,8 @@ pub struct Cpu {
     v: [u8; 16],
     i: u16,
     stack: Vec<u16>,
+    pub delay_timer: u8,
+    pub sound_timer: u8
 }
 
 impl Cpu {
@@ -19,6 +23,8 @@ impl Cpu {
             stack: Vec::new(),
             v: [0; 16],
             i: 0,
+            delay_timer:0,
+            sound_timer:0
         }
     }
 
@@ -30,10 +36,11 @@ impl Cpu {
         for (i, el) in items.iter().enumerate() {
             self.ram[512 + i] = *el;
         }
-        &self.pretty_print();
+        // &self.pretty_print();
     }
     pub fn execute_op(&mut self, op: Op) {
         self.pc += 2;
+        println!("{:#04X?}", op.op);
         match op.op {
             0x0 => {
                 if op.nn == 0xE0 {
@@ -70,9 +77,9 @@ impl Cpu {
                 2 => self.v[op.x as usize] = (self.v[op.x as usize] & self.v[op.y as usize]),
                 3 => self.v[op.x as usize] = (self.v[op.x as usize] ^ self.v[op.y as usize]),
                 4 => {
-                    let result = self.v[op.x as usize] + self.v[op.y as usize];
+                    let (result, did_overflow)= self.v[op.x as usize].overflowing_add((self.v[op.y as usize]));
                     self.v[0xF] = 0;
-                    if result > 0xFF {
+                    if did_overflow {
                         self.v[0xF] = 1;
                     }
                     self.v[op.x as usize] = result;
@@ -103,10 +110,16 @@ impl Cpu {
                 }
                 _ => self.log_not_implemented(),
             },
+            9 => {
+                if self.v[op.x as usize] != self.v[op.y as usize] {
+                    self.pc += 2;
+                }
+            }
             0xA => {
                 self.i = op.nnn;
             }
-
+            0xB => self.pc = (op.nnn + self.v[0x0] as u16) as i16,
+            0xC => self.v[op.x as usize] = rand::thread_rng().gen_range(0..=255) & op.n,
             0xD => {
                 let xVal = self.v[op.x as usize];
                 let yVal = self.v[op.y as usize];
@@ -130,8 +143,7 @@ impl Cpu {
                             break;
                         }
 
-                        println!("{} x", x);
-                        println!("{} y", y);
+
                         let oldPixel = self.display[x as usize][y as usize];
                         let currentPos = 7 - col;
                         let toShift = 1 << currentPos;
@@ -149,7 +161,10 @@ impl Cpu {
                 }
             }
             0xF => match op.nn {
+                0x07 => self.v[op.x as usize] = self.delay_timer,
+                0x15 => self.delay_timer =self.v[op.x as usize],
                 0x1E => self.i = self.i.wrapping_add(self.v[op.x as usize].into()),
+                0x29 => self.i = (self.v[(op.x) as usize] * 5) as u16,
                 0x55 => {
                     for i in 0..=op.x {
                         self.ram[(self.i + i as u16) as usize] = self.v[i as usize];

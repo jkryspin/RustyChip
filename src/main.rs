@@ -1,6 +1,9 @@
 mod chip;
 mod game;
 use std::{thread, time};
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+use fermium::timer::SDL_Delay;
 
 fn main() {
     println!("Hello, world!");
@@ -8,23 +11,32 @@ fn main() {
     let chip = &mut chip::Chip::new();
     chip.load_rom();
 
+    let target_ft = time::Duration::from_micros(1000000 / 60);
     unsafe {
-        let game = game::Game::new();
-        game.init();
-        let mut i = 0;
-        while(true && i< 100000){
-            chip.update();
-            if &i%10000 == 0 {
-                game.init();
-                game.draw(&chip.cpu.display);
-                game.commit();
-                println!("{}", i);
+        let mut game = game::Game::new();
+        while(!game.quit){
+            let cycle_start = Instant::now();
+            if chip.cpu.delay_timer > 0
+            {
+                chip.cpu.delay_timer -= 1;
             }
 
-            i += 1;
+            if chip.cpu.sound_timer > 0
+            {
+                chip.cpu.sound_timer -= 1;
+            }
+            println!("looping");
+            for i in 0..16 {
+                chip.update();
+            }
+            game.init();
+            game.draw(&chip.cpu.display);
+            game.commit();
+            game.run();
+            if let Some(i) = (target_ft).checked_sub(cycle_start.elapsed()) {
+                thread::sleep(i)
+            }
         }
-        // game.add_rect(0);
-        game.run();
     }
     return;
 }

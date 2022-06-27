@@ -14,7 +14,7 @@ impl Chip {
         }
     }
     pub fn load_rom(&mut self) {
-        let contents = fs::read("./src/roms/ibm_logo.ch8").expect("File");
+        let contents = fs::read("./src/roms/test_opcode.ch8").expect("File");
         self.cpu.init_ram(contents);
     }
 

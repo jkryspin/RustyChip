@@ -1,3 +1,4 @@
+use std::env::var;
 use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_QUIT};
 use fermium::keycode::SDLK_q;
 use fermium::prelude::{
@@ -19,6 +20,7 @@ const title: *const c_char = "hello".as_ptr().cast();
 pub struct Game {
     window: *mut SDL_Window,
     renderer: *mut SDL_Renderer,
+    pub quit: bool
 }
 
 impl Game {
@@ -34,7 +36,8 @@ impl Game {
         );
         return Game {
             window,
-            renderer: SDL_CreateRenderer(window, -1 as c_int, 0),
+            renderer: SDL_CreateRenderer(window, -1 as c_int, SDL_RENDERER_ACCELERATED.0),
+            quit:false
         };
     }
     pub unsafe fn init(&self) {
@@ -50,8 +53,6 @@ impl Game {
 
         // Render rect
         SDL_RenderFillRect(self.renderer, &r);
-
-        // Render the rect to the screen
     }
     pub unsafe fn draw(&self, &display: &[[bool; 32]; 64]) {
         for x in 0..display.len() {
@@ -67,22 +68,20 @@ impl Game {
         SDL_RenderPresent(self.renderer);
     }
 
-    pub unsafe fn run(&self) {
-        let mut quit = false;
-        while !&quit {
+    pub unsafe fn run(&mut self){
             let mut event: SDL_Event = SDL_Event::default();
             while SDL_PollEvent(&mut event) != 0 {
                 match event.type_ {
                     SDL_KEYDOWN => match event.key.keysym.sym {
-                        SDLK_q => quit = true,
-                        _ => {}
+                        K => {}
                     },
                     _ => {}
                 }
             }
+        if(self.quit) {
+            SDL_DestroyWindow(self.window);
+            SDL_Quit();
         }
-        SDL_DestroyWindow(self.window);
-        SDL_Quit();
         return;
     }
 }
