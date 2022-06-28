@@ -14,11 +14,11 @@ impl Chip {
         }
     }
     pub fn load_rom(&mut self) {
-        let contents = fs::read("./src/roms/test_opcode.ch8").expect("File");
+        let contents = fs::read("./src/roms/PONG").expect("File");
         self.cpu.init_ram(contents);
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, pressed_keys: [u8; 16]) {
         let byte1: u8 = self.cpu.ram[self.cpu.pc as usize];
         let byte2: u8 = self.cpu.ram[(self.cpu.pc + 1) as usize];
         let val = (byte1 & 0xF) as u16;
@@ -30,7 +30,7 @@ impl Chip {
             nn: byte2,
             nnn: ((val << 8) | (byte2 as u16)) as u16,
         };
-        self.cpu.execute_op(op_data);
+        self.cpu.execute_op(op_data, pressed_keys);
     }
 }
 

@@ -1,6 +1,7 @@
 use std::env::var;
+use std::ptr::null;
 use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_QUIT};
-use fermium::keycode::SDLK_q;
+use fermium::keycode::{SDL_Keycode, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_a, SDLK_c, SDLK_d, SDLK_e, SDLK_f, SDLK_q, SDLK_r, SDLK_s, SDLK_v, SDLK_w, SDLK_x, SDLK_z};
 use fermium::prelude::{
     SDL_CreateRenderer, SDL_RenderClear, SDL_RenderDrawRect, SDL_SetRenderDrawColor,
 };
@@ -20,7 +21,8 @@ const title: *const c_char = "hello".as_ptr().cast();
 pub struct Game {
     window: *mut SDL_Window,
     renderer: *mut SDL_Renderer,
-    pub quit: bool
+    pub quit: bool,
+    pressed_keys: [u8; 16],
 }
 
 impl Game {
@@ -37,7 +39,8 @@ impl Game {
         return Game {
             window,
             renderer: SDL_CreateRenderer(window, -1 as c_int, SDL_RENDERER_ACCELERATED.0),
-            quit:false
+            quit:false,
+            pressed_keys: [0; 16]
         };
     }
     pub unsafe fn init(&self) {
@@ -68,20 +71,38 @@ impl Game {
         SDL_RenderPresent(self.renderer);
     }
 
-    pub unsafe fn run(&mut self){
-            let mut event: SDL_Event = SDL_Event::default();
+    pub unsafe fn run(&mut self) -> [u8;16]{
+        let mut pressed_keys = [0;16];
+        let mut event: SDL_Event = SDL_Event::default();
             while SDL_PollEvent(&mut event) != 0 {
-                match event.type_ {
+                let key:u8 = match event.type_ {
                     SDL_KEYDOWN => match event.key.keysym.sym {
-                        K => {}
+                        SDLK_1 => 0x1,
+                        SDLK_2 => 0x2,
+                        SDLK_3 => 0x3,
+                        SDLK_4 => 0xC,
+                        SDLK_q => 0x4,
+                        SDLK_w => 0x5,
+                        SDLK_e => 0x6,
+                        SDLK_r => 0xD,
+                        SDLK_a => 0x7,
+                        SDLK_s => 0x8,
+                        SDLK_d => 0x9,
+                        SDLK_f => 0xE,
+                        SDLK_z=>0xA,
+                        SDLK_x=>0x0,
+                        SDLK_c=> 0xB,
+                        SDLK_v =>0xF,
+                        _ => panic!("no match")
                     },
-                    _ => {}
-                }
+                    _ => 0 //todo
+                };
+                    pressed_keys[key as usize] = 0x1;
             }
         if(self.quit) {
             SDL_DestroyWindow(self.window);
             SDL_Quit();
         }
-        return;
+        return pressed_keys;
     }
 }

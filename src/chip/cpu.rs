@@ -38,7 +38,7 @@ impl Cpu {
         }
         // &self.pretty_print();
     }
-    pub fn execute_op(&mut self, op: Op) {
+    pub fn execute_op(&mut self, op: Op, pressed_keys: [u8; 16]) {
         self.pc += 2;
         println!("{:#04X?}", op.op);
         match op.op {
@@ -160,10 +160,20 @@ impl Cpu {
                     index += 1;
                 }
             }
+            0xE => match op.nn {
+                0x9E => if pressed_keys[self.v[op.x as usize] as usize] == 0x1{
+                    self.pc +=2;
+                }
+                0xA1 => if pressed_keys[self.v[op.x as usize] as usize] != 0x1{
+                    self.pc +=2;
+                }
+                _ => panic!("not implemen")
+            }
             0xF => match op.nn {
                 0x07 => self.v[op.x as usize] = self.delay_timer,
                 0x15 => self.delay_timer =self.v[op.x as usize],
                 0x1E => self.i = self.i.wrapping_add(self.v[op.x as usize].into()),
+                0x18 => self.sound_timer =self.v[op.x as usize],
                 0x29 => self.i = (self.v[(op.x) as usize] * 5) as u16,
                 0x55 => {
                     for i in 0..=op.x {

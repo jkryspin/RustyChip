@@ -15,6 +15,7 @@ fn main() {
     unsafe {
         let mut game = game::Game::new();
         while(!game.quit){
+            let pressed_keys= game.run();
             let cycle_start = Instant::now();
             if chip.cpu.delay_timer > 0
             {
@@ -27,12 +28,11 @@ fn main() {
             }
             println!("looping");
             for i in 0..16 {
-                chip.update();
+                chip.update(pressed_keys);
             }
             game.init();
             game.draw(&chip.cpu.display);
             game.commit();
-            game.run();
             if let Some(i) = (target_ft).checked_sub(cycle_start.elapsed()) {
                 thread::sleep(i)
             }
