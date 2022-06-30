@@ -1,6 +1,6 @@
 use crate::chip::Op;
 use rand::prelude::*;
-
+use std::fs;
 
 #[derive(Clone)]
 pub struct Cpu {
@@ -13,34 +13,35 @@ pub struct Cpu {
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub is_waiting_for_input: bool,
-    pub save_into_this_vx:u8
+    pub save_into_this_vx: u8,
 }
 
 impl Cpu {
-    pub fn new() -> Cpu {
+    pub fn new(contents: Vec<u8>) -> Cpu {
         Cpu {
             pc: 512,
-            ram: [0; 4096],
+            ram: Cpu::init_ram(contents),
             display: [[false; 32]; 64],
             stack: Vec::new(),
             v: [0; 16],
             i: 0,
-            delay_timer:0,
-            sound_timer:0,
+            delay_timer: 0,
+            sound_timer: 0,
             is_waiting_for_input: false,
-            save_into_this_vx: 0
+            save_into_this_vx: 0,
         }
     }
 
-    pub fn init_ram(&mut self, items: Vec<u8>) {
+    fn init_ram(items: Vec<u8>) -> [u8; 4096] {
+        let mut ram = [0; 4096];
         let sprites = Cpu::get_sprites();
         for (i, sprite) in sprites.iter().enumerate() {
-            self.ram[i] = *sprite;
+            ram[i] = *sprite;
         }
         for (i, el) in items.iter().enumerate() {
-            self.ram[512 + i] = *el;
+            ram[512 + i] = *el;
         }
-        // &self.pretty_print();
+        return ram;
     }
     pub fn execute_op(&mut self, op: Op, pressed_keys: [u8; 16]) {
         self.pc += 2;
@@ -62,7 +63,7 @@ impl Cpu {
             2 => {
                 self.stack.push(self.pc as u16);
                 self.pc = op.nnn as i16;
-            },
+            }
             3 => {
                 if self.v[op.x as usize] == op.nn {
                     self.pc += 2;
@@ -86,7 +87,8 @@ impl Cpu {
                 2 => self.v[op.x as usize] = (self.v[op.x as usize] & self.v[op.y as usize]),
                 3 => self.v[op.x as usize] = (self.v[op.x as usize] ^ self.v[op.y as usize]),
                 4 => {
-                    let (result, did_overflow)= self.v[op.x as usize].overflowing_add((self.v[op.y as usize]));
+                    let (result, did_overflow) =
+                        self.v[op.x as usize].overflowing_add((self.v[op.y as usize]));
                     self.v[0xF] = 0;
                     if did_overflow {
                         self.v[0xF] = 1;
@@ -130,16 +132,16 @@ impl Cpu {
             0xB => self.pc = (op.nnn + self.v[0x0] as u16) as i16,
             0xC => self.v[op.x as usize] = rand::thread_rng().gen_range(0..=255) & op.n,
             0xD => {
-                let xVal = self.v[op.x as usize];
-                let yVal = self.v[op.y as usize];
+                let x_val = self.v[op.x as usize];
+                let y_val = self.v[op.y as usize];
 
-                let xCoord = xVal & 63;
-                let yCoord = yVal & 31;
+                let x_coord = x_val & 63;
+                let y_coord = y_val & 31;
                 self.v[0xF as usize] = 0;
 
                 let mut index = 0;
                 for row in 0..op.n {
-                    let y = yCoord + row;
+                    let y = y_coord + row;
                     if y >= 32 {
                         break;
                     }
@@ -147,22 +149,21 @@ impl Cpu {
                     let sprite = self.ram[(self.i + index) as usize];
 
                     for col in 0..8 {
-                        let x = xCoord + col;
+                        let x = x_coord + col;
                         if x >= 64 {
                             break;
                         }
 
-
-                        let oldPixel = self.display[x as usize][y as usize];
-                        let currentPos = 7 - col;
-                        let toShift = 1 << currentPos;
+                        let old_pixel = self.display[x as usize][y as usize];
+                        let current_pos = 7 - col;
+                        let to_shift = 1 << current_pos;
 
                         // check the current bit is on or not
-                        let newPixel = (sprite & toShift) != 0x0;
-                        if (oldPixel && newPixel) {
+                        let new_pixel = (sprite & to_shift) != 0x0;
+                        if (old_pixel && new_pixel) {
                             self.display[x as usize][y as usize] = false;
                             self.v[0xF] = 1;
-                        } else if newPixel && !oldPixel {
+                        } else if new_pixel && !old_pixel {
                             self.display[x as usize][y as usize] = true;
                         }
                     }
@@ -170,23 +171,27 @@ impl Cpu {
                 }
             }
             0xE => match op.nn {
-                0x9E => if pressed_keys[self.v[op.x as usize] as usize] == 0x1{
-                    self.pc +=2;
+                0x9E => {
+                    if pressed_keys[self.v[op.x as usize] as usize] == 0x1 {
+                        self.pc += 2;
+                    }
                 }
-                0xA1 => if pressed_keys[self.v[op.x as usize] as usize] != 0x1{
-                    self.pc +=2;
+                0xA1 => {
+                    if pressed_keys[self.v[op.x as usize] as usize] != 0x1 {
+                        self.pc += 2;
+                    }
                 }
-                _ => panic!("not implemen")
-            }
+                _ => panic!("not implemen"),
+            },
             0xF => match op.nn {
                 0x07 => self.v[op.x as usize] = self.delay_timer,
                 0xA => {
                     self.is_waiting_for_input = true;
                     self.save_into_this_vx = op.x;
                 }
-                0x15 => self.delay_timer =self.v[op.x as usize],
+                0x15 => self.delay_timer = self.v[op.x as usize],
                 0x1E => self.i = self.i.wrapping_add(self.v[op.x as usize] as u16),
-                0x18 => self.sound_timer =self.v[op.x as usize],
+                0x18 => self.sound_timer = self.v[op.x as usize],
                 0x29 => self.i = (self.v[(op.x) as usize] * 5) as u16,
                 0x55 => {
                     for i in 0..=op.x {
@@ -245,8 +250,8 @@ impl Cpu {
             0xF0, 0x80, 0x80, 0x80, 0xF0, // C
             0xE0, 0x90, 0x90, 0x90, 0xE0, // D
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-            0xF0, 0x80, 0xF0, 0x80, 0x80,
-        ]; // F
+            0xF0, 0x80, 0xF0, 0x80, 0x80, // F
+        ];
         return sprites;
     }
 }
