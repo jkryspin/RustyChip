@@ -7,11 +7,13 @@ pub struct Cpu {
     pub pc: i16,
     pub ram: [u8; 4096],
     pub display: [[bool; 32]; 64],
-    v: [u8; 16],
+    pub v: [u8; 16],
     i: u16,
     stack: Vec<u16>,
     pub delay_timer: u8,
-    pub sound_timer: u8
+    pub sound_timer: u8,
+    pub is_waiting_for_input: bool,
+    pub save_into_this_vx:u8
 }
 
 impl Cpu {
@@ -24,7 +26,9 @@ impl Cpu {
             v: [0; 16],
             i: 0,
             delay_timer:0,
-            sound_timer:0
+            sound_timer:0,
+            is_waiting_for_input: false,
+            save_into_this_vx: 0
         }
     }
 
@@ -48,12 +52,17 @@ impl Cpu {
                 } else if op.nn == 0xEE {
                     self.pc = self.stack.pop().expect("Should never pop too far") as i16;
                 } else {
+                    println!("{:#04X?}", op.nn);
+                    println!("{}", op.nn);
                     self.log_not_implemented();
                 }
                 println!("poggers")
             }
             1 => self.pc = op.nnn as i16,
-            2 => self.stack.push(self.pc as u16),
+            2 => {
+                self.stack.push(self.pc as u16);
+                self.pc = op.nnn as i16;
+            },
             3 => {
                 if self.v[op.x as usize] == op.nn {
                     self.pc += 2;
@@ -112,7 +121,7 @@ impl Cpu {
             },
             9 => {
                 if self.v[op.x as usize] != self.v[op.y as usize] {
-                    self.pc += 2;
+                    self.pc += 2
                 }
             }
             0xA => {
@@ -171,8 +180,12 @@ impl Cpu {
             }
             0xF => match op.nn {
                 0x07 => self.v[op.x as usize] = self.delay_timer,
+                0xA => {
+                    self.is_waiting_for_input = true;
+                    self.save_into_this_vx = op.x;
+                }
                 0x15 => self.delay_timer =self.v[op.x as usize],
-                0x1E => self.i = self.i.wrapping_add(self.v[op.x as usize].into()),
+                0x1E => self.i = self.i.wrapping_add(self.v[op.x as usize] as u16),
                 0x18 => self.sound_timer =self.v[op.x as usize],
                 0x29 => self.i = (self.v[(op.x) as usize] * 5) as u16,
                 0x55 => {

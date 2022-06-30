@@ -1,6 +1,7 @@
 use std::env::var;
+use std::ffi::CString;
 use std::ptr::null;
-use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_QUIT};
+use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_QUIT, SDL_KEYUP};
 use fermium::keycode::{SDL_Keycode, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_a, SDLK_c, SDLK_d, SDLK_e, SDLK_f, SDLK_q, SDLK_r, SDLK_s, SDLK_v, SDLK_w, SDLK_x, SDLK_z};
 use fermium::prelude::{
     SDL_CreateRenderer, SDL_RenderClear, SDL_RenderDrawRect, SDL_SetRenderDrawColor,
@@ -15,7 +16,6 @@ use fermium::video::{
 use fermium::{c_char, c_int, SDL_Quit, SDL_INIT_VIDEO};
 use fermium::timer::SDL_Delay;
 
-const title: *const c_char = "hello".as_ptr().cast();
 
 #[derive(Clone)]
 pub struct Game {
@@ -28,8 +28,13 @@ pub struct Game {
 impl Game {
     pub unsafe fn new() -> Self {
         fermium::SDL_Init(SDL_INIT_VIDEO);
+        const TITLE: &str = "hello";
+        let c_str = CString::new(TITLE).unwrap();
+        let c_world = c_str.as_ptr();
+
         let window = SDL_CreateWindow(
-            title,
+
+            c_world,
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             64 * 5,
@@ -71,38 +76,61 @@ impl Game {
         SDL_RenderPresent(self.renderer);
     }
 
+    unsafe fn set_pressed_keys(&mut self, down:bool, index:u8) {
+        self.pressed_keys [index as usize] = down as u8
+    }
+
     pub unsafe fn run(&mut self) -> [u8;16]{
-        let mut pressed_keys = [0;16];
         let mut event: SDL_Event = SDL_Event::default();
             while SDL_PollEvent(&mut event) != 0 {
-                let key:u8 = match event.type_ {
-                    SDL_KEYDOWN => match event.key.keysym.sym {
-                        SDLK_1 => 0x1,
-                        SDLK_2 => 0x2,
-                        SDLK_3 => 0x3,
-                        SDLK_4 => 0xC,
-                        SDLK_q => 0x4,
-                        SDLK_w => 0x5,
-                        SDLK_e => 0x6,
-                        SDLK_r => 0xD,
-                        SDLK_a => 0x7,
-                        SDLK_s => 0x8,
-                        SDLK_d => 0x9,
-                        SDLK_f => 0xE,
-                        SDLK_z=>0xA,
-                        SDLK_x=>0x0,
-                        SDLK_c=> 0xB,
-                        SDLK_v =>0xF,
-                        _ => panic!("no match")
+               match event.type_ {
+                    SDL_KEYDOWN => {
+                        match event.key.keysym.sym {
+                            SDLK_1 => self.set_pressed_keys(true, 0x1),
+                            SDLK_2 => self.set_pressed_keys(true, 0x2),
+                            SDLK_3 => self.set_pressed_keys(true, 0x3),
+                            SDLK_4 => self.set_pressed_keys( true, 0xc),
+                            SDLK_q => self.set_pressed_keys(true, 0x4),
+                            SDLK_w => self.set_pressed_keys(true, 0x5),
+                            SDLK_e => self.set_pressed_keys(true, 0x6),
+                            SDLK_r => self.set_pressed_keys(true, 0xD),
+                            SDLK_a => self.set_pressed_keys(true, 0x7),
+                            SDLK_s => self.set_pressed_keys(true, 0x8),
+                            SDLK_d => self.set_pressed_keys(true, 0x9),
+                            SDLK_f => self.set_pressed_keys(true, 0xE),
+                            SDLK_z => self.set_pressed_keys(true, 0xA),
+                            SDLK_x => self.set_pressed_keys(true, 0x0),
+                            SDLK_c=> self.set_pressed_keys(true, 0xB),
+                            SDLK_v=> self.set_pressed_keys(true, 0xF),
+                            _ => {}
+                        }
                     },
-                    _ => 0 //todo
+                    SDL_KEYUP => match event.key.keysym.sym {
+                        SDLK_1 => self.set_pressed_keys(false, 0x1),
+                        SDLK_2 => self.set_pressed_keys(false, 0x2),
+                        SDLK_3 => self.set_pressed_keys(false, 0x3),
+                        SDLK_4 => self.set_pressed_keys(false, 0xc),
+                        SDLK_q => self.set_pressed_keys(false, 0x4),
+                        SDLK_w => self.set_pressed_keys(false, 0x5),
+                        SDLK_e => self.set_pressed_keys(false, 0x6),
+                        SDLK_r => self.set_pressed_keys(false, 0xD),
+                        SDLK_a => self.set_pressed_keys(false, 0x7),
+                        SDLK_s => self.set_pressed_keys(false, 0x8),
+                        SDLK_d => self.set_pressed_keys(false, 0x9),
+                        SDLK_f => self.set_pressed_keys(false, 0xE),
+                        SDLK_z => self.set_pressed_keys(false, 0xA),
+                        SDLK_x => self.set_pressed_keys(false, 0x0),
+                        SDLK_c=> self.set_pressed_keys(false, 0xB),
+                        SDLK_v=> self.set_pressed_keys(false, 0xF),
+                        _ => {},
+                        }
+                    _ =>{}
                 };
-                    pressed_keys[key as usize] = 0x1;
             }
         if(self.quit) {
             SDL_DestroyWindow(self.window);
             SDL_Quit();
         }
-        return pressed_keys;
+        return self.pressed_keys;
     }
 }
