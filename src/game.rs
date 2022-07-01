@@ -25,7 +25,7 @@ use fermium::audio::{SDL_MIX_MAXVOLUME, SDL_MixAudio, SDL_MixAudioFormat};
 pub struct Game {
     window: *mut SDL_Window,
     renderer: *mut SDL_Renderer,
-    pub quit: bool,
+    pub should_quit: bool,
     pressed_keys: [u8; 16],
 }
 
@@ -47,7 +47,7 @@ impl Game {
         return Game {
             window,
             renderer: SDL_CreateRenderer(window, -1 as c_int, SDL_RENDERER_ACCELERATED.0),
-            quit: false,
+            should_quit: false,
             pressed_keys: [0; 16],
         };
     }
@@ -128,7 +128,7 @@ impl Game {
                 _ => {}
             };
         }
-        if (self.quit) {
+        if (self.should_quit) {
             SDL_DestroyWindow(self.window);
             SDL_Quit();
         }

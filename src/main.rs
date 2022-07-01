@@ -17,7 +17,7 @@ fn main() {
     let rom_selected = get_user_selection(files);
     let contents = get_contents(rom_selected);
 
-    let chip = &mut chip::Chip::new(contents);
+    let mut chip =  chip::Chip::new(contents);
 
     let sounds = sounds::Sound::new();
     // 60 updates per second
@@ -25,7 +25,7 @@ fn main() {
     let target_frame_time = time::Duration::from_micros(1000000 / 60);
     unsafe {
         let mut game = game::Game::new();
-        while !game.quit {
+        while !game.should_quit {
             let cycle_start = Instant::now();
             let pressed_keys = game.run();
 
@@ -38,6 +38,7 @@ fn main() {
             if pressed_keys.contains(&0x1) {
                 chip.cpu.is_waiting_for_input = false;
             }
+
             if chip.cpu.delay_timer > 0 {
                 chip.cpu.delay_timer -= 1;
             }
@@ -46,7 +47,7 @@ fn main() {
                 sounds.play_raw();
                 chip.cpu.sound_timer -= 1;
             }
-            // println!("looping");
+
             for _ in 0..16 {
                 if chip.cpu.is_waiting_for_input {
                     break;

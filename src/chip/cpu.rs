@@ -54,9 +54,8 @@ impl Cpu {
                 } else {
                     println!("{:#04X?}", op.nn);
                     println!("{}", op.nn);
-                    self.log_not_implemented();
+                    Cpu::log_not_implemented(op);
                 }
-                println!("poggers")
             }
             1 => self.pc = op.nnn as i16,
             2 => {
@@ -118,7 +117,7 @@ impl Cpu {
                     self.v[0xF] = (self.v[op.x as usize] >> 7) & 0x01;
                     self.v[op.x as usize] = self.v[op.x as usize] << 1;
                 }
-                _ => self.log_not_implemented(),
+                _ => Cpu::log_not_implemented(op),
             },
             9 => {
                 if self.v[op.x as usize] != self.v[op.y as usize] {
@@ -180,7 +179,7 @@ impl Cpu {
                         self.pc += 2;
                     }
                 }
-                _ => panic!("not implemen"),
+                _ => Cpu::log_not_implemented(op),
             },
             0xF => match op.nn {
                 0x07 => self.v[op.x as usize] = self.delay_timer,
@@ -211,20 +210,19 @@ impl Cpu {
                     }
                 }
                 _ => {
-                    println!("{:#04X?}", op.nn);
-                    panic!("No match, you screwed up implementation")
+                    Cpu::log_not_implemented(op);
                 }
             },
             _ => {
-                println!("{:#04X?}", op.op);
-                println!("{}", op.op);
-                panic!("No match, you screwed up implementation")
+               Cpu::log_not_implemented(op);
             }
         }
     }
 
-    fn log_not_implemented(&self) {
-        panic!("no match!! ")
+    pub fn log_not_implemented(op: Op) {
+        println!("op: {:#04X?}", op.op);
+        println!("nn: {:#04X?}", op.nn);
+        panic!("No match, you screwed up implementation")
     }
 
     fn pretty_print(&self) {

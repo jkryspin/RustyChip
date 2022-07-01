@@ -2,7 +2,6 @@ use std::fs;
 
 mod cpu;
 
-#[derive(Clone)]
 pub struct Chip {
     pub cpu: cpu::Cpu,
 }
