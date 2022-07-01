@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_KEYUP, SDL_QUIT};
 use fermium::keycode::{
     SDLK_a, SDLK_c, SDLK_d, SDLK_e, SDLK_f, SDLK_q, SDLK_r, SDLK_s, SDLK_v, SDLK_w, SDLK_x, SDLK_z,
@@ -14,10 +15,11 @@ use fermium::timer::SDL_Delay;
 use fermium::video::{
     SDL_CreateWindow, SDL_DestroyWindow, SDL_Window, SDL_WindowFlags, SDL_WINDOWPOS_CENTERED,
 };
-use fermium::{c_char, c_int, SDL_Quit, SDL_INIT_VIDEO};
+use fermium::{c_char, c_int, SDL_Quit, SDL_INIT_VIDEO, c_uint};
 use std::env::var;
 use std::ffi::CString;
 use std::ptr::null;
+use fermium::audio::{SDL_MIX_MAXVOLUME, SDL_MixAudio, SDL_MixAudioFormat};
 
 #[derive(Clone)]
 pub struct Game {

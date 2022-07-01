@@ -3,7 +3,7 @@ use std::ffi::OsString;
 pub fn get_user_selection(files: Vec<OsString>) -> String {
     use std::io::{stdin, stdout, Write};
     let mut s = String::new();
-    print!("Pick a rom to load!");
+    println!("Pick a rom to load!");
     for i in 0..files.len() {
         let file = &files[i].clone().into_string().expect("Has Name");
         println!("{}: {}", i, file);

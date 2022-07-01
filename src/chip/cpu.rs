@@ -45,7 +45,6 @@ impl Cpu {
     }
     pub fn execute_op(&mut self, op: Op, pressed_keys: [u8; 16]) {
         self.pc += 2;
-        println!("{:#04X?}", op.op);
         match op.op {
             0x0 => {
                 if op.nn == 0xE0 {
@@ -160,7 +159,7 @@ impl Cpu {
 
                         // check the current bit is on or not
                         let new_pixel = (sprite & to_shift) != 0x0;
-                        if (old_pixel && new_pixel) {
+                        if old_pixel && new_pixel {
                             self.display[x as usize][y as usize] = false;
                             self.v[0xF] = 1;
                         } else if new_pixel && !old_pixel {

@@ -2,6 +2,7 @@ mod chip;
 mod files;
 mod game;
 mod input;
+mod sounds;
 
 use crate::files::{file_names, get_contents};
 use crate::input::get_user_selection;
@@ -17,12 +18,17 @@ fn main() {
     let contents = get_contents(rom_selected);
 
     let chip = &mut chip::Chip::new(contents);
-    let target_ft = time::Duration::from_micros(1000000 / 60);
+
+    let sounds = sounds::Sound::new();
+    // 60 updates per second
+    // 1 update = 1 seconds /60 or 16.666 hz
+    let target_frame_time = time::Duration::from_micros(1000000 / 60);
     unsafe {
         let mut game = game::Game::new();
         while !game.quit {
             let cycle_start = Instant::now();
             let pressed_keys = game.run();
+
             if chip.cpu.save_into_this_vx != 0x0 {
                 if let Some(x) = pressed_keys.iter().position(|&s| s == 0x1) {
                     chip.cpu.v[chip.cpu.save_into_this_vx as usize] = x as u8;
@@ -37,9 +43,10 @@ fn main() {
             }
 
             if chip.cpu.sound_timer > 0 {
+                sounds.play_raw();
                 chip.cpu.sound_timer -= 1;
             }
-            println!("looping");
+            // println!("looping");
             for _ in 0..16 {
                 if chip.cpu.is_waiting_for_input {
                     break;
@@ -49,8 +56,8 @@ fn main() {
             game.init();
             game.draw(&chip.cpu.display);
             game.commit();
-            if let Some(i) = (target_ft).checked_sub(cycle_start.elapsed()) {
-                SDL_Delay(i.as_millis() as u32);
+            if let Some(i) = (target_frame_time).checked_sub(cycle_start.elapsed()) {
+                std::thread::sleep(i);
             }
         }
     }
