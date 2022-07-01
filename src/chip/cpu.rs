@@ -1,6 +1,5 @@
 use crate::chip::Op;
 use rand::prelude::*;
-use std::fs;
 
 #[derive(Clone)]
 pub struct Cpu {
@@ -43,7 +42,7 @@ impl Cpu {
         }
         return ram;
     }
-    pub fn execute_op(&mut self, op: Op, pressed_keys: [u8; 16]) {
+    pub fn execute_op(&mut self, op: Op, pressed_keys: &[u8; 16]) {
         self.pc += 2;
         match op.op {
             0x0 => {
@@ -214,7 +213,7 @@ impl Cpu {
                 }
             },
             _ => {
-               Cpu::log_not_implemented(op);
+                Cpu::log_not_implemented(op);
             }
         }
     }

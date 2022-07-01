@@ -22,7 +22,7 @@ pub fn get_user_selection(files: Vec<OsString>) -> String {
         }
         print!("{}", s);
         if let Ok(x) = s.parse::<usize>() {
-            if x < files.len() && x >= 0 {
+            if x < files.len() {
                 break x;
             }
         }

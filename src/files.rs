@@ -5,8 +5,8 @@ pub fn file_names() -> Vec<OsString> {
     let roms = fs::read_dir("src/roms").expect("Directory exists");
     let mut files: Vec<OsString> = Vec::new();
     for x in roms {
-        if let Ok(T) = x{
-            files.push(T.file_name());
+        if let Ok(dir) = x {
+            files.push(dir.file_name());
         }
     }
     return files;

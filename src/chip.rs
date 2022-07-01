@@ -1,5 +1,3 @@
-use std::fs;
-
 mod cpu;
 
 pub struct Chip {
@@ -13,7 +11,7 @@ impl Chip {
         }
     }
 
-    pub fn update(&mut self, pressed_keys: [u8; 16]) {
+    pub fn update(&mut self, pressed_keys: &[u8; 16]) {
         let byte1 = self.cpu.ram[self.cpu.pc as usize];
         let byte2 = self.cpu.ram[(self.cpu.pc + 1) as usize];
         let val = (byte1 as u16 & 0xF);
