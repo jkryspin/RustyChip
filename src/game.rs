@@ -68,7 +68,7 @@ impl Game {
         // Render rect
         SDL_RenderFillRect(self.renderer, &r);
     }
-    pub unsafe fn draw(&self, &display: &[[bool; 32]; 64]) {
+    pub unsafe fn draw(&self, display: &[[bool; 32]; 64]) {
         for x in 0..display.len() {
             for y in 0..display[0].len() {
                 if display[x][y] {

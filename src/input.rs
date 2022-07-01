@@ -22,12 +22,12 @@ pub fn get_user_selection(files: Vec<OsString>) -> String {
         }
         print!("{}", s);
         if let Ok(x) = s.parse::<usize>() {
-            if x <files.len() && x>=0 {
+            if x < files.len() && x >= 0 {
                 break x;
             }
         }
         println!(" is not a valid input");
-        println!("Please enter a number from 0 to {}", files.len()-1);
+        println!("Please enter a number from 0 to {}", files.len() - 1);
     };
     return files[index].clone().into_string().expect("has name");
 }

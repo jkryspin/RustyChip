@@ -44,7 +44,7 @@ fn main() {
             }
 
             if chip.cpu.sound_timer > 0 {
-                sounds.play_raw();
+                sounds.play_noise();
                 chip.cpu.sound_timer -= 1;
             }
 

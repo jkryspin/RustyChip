@@ -18,7 +18,7 @@ impl Sound{
         }
     }
 
-    pub fn play_raw(&self){
+    pub fn play_noise(&self){
         let file = BufReader::new(File::open("src/assets/Chip8Emu_smw2_coin.wav").unwrap());
         let source = Decoder::new(file).unwrap();
         if self.sink.empty() {
