@@ -1,4 +1,5 @@
 use std::borrow::BorrowMut;
+use std::collections::HashMap;
 use fermium::events::{SDL_Event, SDL_EventType, SDL_PollEvent, SDL_KEYDOWN, SDL_KEYUP, SDL_QUIT};
 use fermium::keycode::{
     SDLK_a, SDLK_c, SDLK_d, SDLK_e, SDLK_f, SDLK_q, SDLK_r, SDLK_s, SDLK_v, SDLK_w, SDLK_x, SDLK_z,
@@ -27,12 +28,13 @@ pub struct Game {
     renderer: *mut SDL_Renderer,
     pub should_quit: bool,
     pressed_keys: [u8; 16],
+    key_map: HashMap<SDL_Keycode, u8>
 }
 
 impl Game {
     pub unsafe fn new() -> Self {
         fermium::SDL_Init(SDL_INIT_VIDEO);
-        const TITLE: &str = "hello";
+        const TITLE: &str = "RustyChip";
         let c_str = CString::new(TITLE).unwrap();
         let c_world = c_str.as_ptr();
 
@@ -49,6 +51,7 @@ impl Game {
             renderer: SDL_CreateRenderer(window, -1 as c_int, SDL_RENDERER_ACCELERATED.0),
             should_quit: false,
             pressed_keys: [0; 16],
+            key_map: Game::key_map()
         };
     }
     pub unsafe fn init(&self) {
@@ -83,55 +86,47 @@ impl Game {
         self.pressed_keys[index as usize] = down as u8
     }
 
+    unsafe fn set_pressed_from_scancode(&mut self, i: SDL_Keycode, is_down:bool){
+        if let Some(key) = self.key_map.get(&i){
+            self.set_pressed_keys(is_down,*key);
+        }
+    }
+
     pub unsafe fn run(&mut self) -> [u8; 16] {
         let mut event: SDL_Event = SDL_Event::default();
         while SDL_PollEvent(&mut event) != 0 {
             match event.type_ {
-                SDL_KEYDOWN => match event.key.keysym.sym {
-                    SDLK_1 => self.set_pressed_keys(true, 0x1),
-                    SDLK_2 => self.set_pressed_keys(true, 0x2),
-                    SDLK_3 => self.set_pressed_keys(true, 0x3),
-                    SDLK_4 => self.set_pressed_keys(true, 0xc),
-                    SDLK_q => self.set_pressed_keys(true, 0x4),
-                    SDLK_w => self.set_pressed_keys(true, 0x5),
-                    SDLK_e => self.set_pressed_keys(true, 0x6),
-                    SDLK_r => self.set_pressed_keys(true, 0xD),
-                    SDLK_a => self.set_pressed_keys(true, 0x7),
-                    SDLK_s => self.set_pressed_keys(true, 0x8),
-                    SDLK_d => self.set_pressed_keys(true, 0x9),
-                    SDLK_f => self.set_pressed_keys(true, 0xE),
-                    SDLK_z => self.set_pressed_keys(true, 0xA),
-                    SDLK_x => self.set_pressed_keys(true, 0x0),
-                    SDLK_c => self.set_pressed_keys(true, 0xB),
-                    SDLK_v => self.set_pressed_keys(true, 0xF),
-                    _ => {}
-                },
-                SDL_KEYUP => match event.key.keysym.sym {
-                    SDLK_1 => self.set_pressed_keys(false, 0x1),
-                    SDLK_2 => self.set_pressed_keys(false, 0x2),
-                    SDLK_3 => self.set_pressed_keys(false, 0x3),
-                    SDLK_4 => self.set_pressed_keys(false, 0xc),
-                    SDLK_q => self.set_pressed_keys(false, 0x4),
-                    SDLK_w => self.set_pressed_keys(false, 0x5),
-                    SDLK_e => self.set_pressed_keys(false, 0x6),
-                    SDLK_r => self.set_pressed_keys(false, 0xD),
-                    SDLK_a => self.set_pressed_keys(false, 0x7),
-                    SDLK_s => self.set_pressed_keys(false, 0x8),
-                    SDLK_d => self.set_pressed_keys(false, 0x9),
-                    SDLK_f => self.set_pressed_keys(false, 0xE),
-                    SDLK_z => self.set_pressed_keys(false, 0xA),
-                    SDLK_x => self.set_pressed_keys(false, 0x0),
-                    SDLK_c => self.set_pressed_keys(false, 0xB),
-                    SDLK_v => self.set_pressed_keys(false, 0xF),
-                    _ => {}
-                },
+                SDL_KEYDOWN => self.set_pressed_from_scancode(event.key.keysym.sym, true),
+                SDL_KEYUP => self.set_pressed_from_scancode(event.key.keysym.sym, false),
                 _ => {}
             };
         }
-        if (self.should_quit) {
+        if self.should_quit {
             SDL_DestroyWindow(self.window);
             SDL_Quit();
         }
         return self.pressed_keys;
+    }
+
+    fn key_map() -> HashMap<SDL_Keycode, u8> {
+        let mut scan_to_index:HashMap<SDL_Keycode,u8> = HashMap::new();
+
+        scan_to_index.insert(SDLK_1, 0x1);
+        scan_to_index.insert(SDLK_2, 0x2);
+        scan_to_index.insert(SDLK_3,0x3);
+        scan_to_index.insert(SDLK_4,0xc);
+        scan_to_index.insert(SDLK_q,0x4);
+        scan_to_index.insert(SDLK_w,0x5);
+        scan_to_index.insert(SDLK_e,0x6);
+        scan_to_index.insert(SDLK_r,0xD);
+        scan_to_index.insert(SDLK_a,0x7);
+        scan_to_index.insert(SDLK_s,0x8);
+        scan_to_index.insert(SDLK_d,0x9);
+        scan_to_index.insert(SDLK_f,0xE);
+        scan_to_index.insert(SDLK_z,0xA);
+        scan_to_index.insert(SDLK_x,0x0);
+        scan_to_index.insert(SDLK_c,0xB);
+        scan_to_index.insert(SDLK_v,0xF);
+        return scan_to_index;
     }
 }
